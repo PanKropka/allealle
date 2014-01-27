@@ -4,58 +4,20 @@
 #include <set>
 #include <algorithm>
 #include <math.h>
+#include <glut.h>	
+#include <ctime>  
+#include <iterator> 
+#include <fstream>
+#include <string>
+#include "Point.h"
+#include "Vertex.h"
+#include "Edge.h"
 
-class Point {
-public:
-	Point(int, int);
-	int x;
-	int y;
-	bool operator<(const Point p2);
-	double odleglosc(const Point *p2);
-};
-
-Point::Point(int x, int y){
-	this->x = x;
-	this->y = y;
-}
-bool Point::operator<(const Point p2){
-
-	if(p2.x > x)
-		return true;
-	else if(p2.x == x && p2.y > y)
-		return true;
-	else
-		return false;
-
-
-}
-
-double Point::odleglosc(const Point *p2){
-
-	return sqrt(pow(p2->y - this->y, 2) + pow(p2->x - this->x, 2));
-}
 
 void printPoint (Point p) {  // function:
 	std::cout << "x: " << p.x << "\ty:" << p.y << std::endl;
 }
 
-class Edge;
-struct Vertex;
-
-class Edge{
-public:
-	Edge(){
-		this->used = false;
-		this->toRemove = false;
-	}
-	Vertex *beg;
-	Vertex *end;
-	double odleglosc;
-	bool used;
-	bool toRemove;
-	bool operator>(const Edge e2);
-
-};
 
 
 bool Edge::operator>(const Edge e2){
@@ -83,32 +45,157 @@ bool pointSort(const Point* one, const Point* two)
 
 }
 
-struct Vertex { 
-	Point *point;
-	std::vector<Edge *> edges;
-};
 
-bool sprawdzStopienPolaczonychWierzcholkow(Edge *e);
+std::vector<Vertex * > graf;
+std::vector< Point* > v;
+std::vector< Point* > points;
+std::vector<Edge *>  mst;
+void init2D(float r, float g, float b)
+{
+	glClearColor(r,g,b,0.0);  
+	glEnable( GL_LINE_SMOOTH );
+	glEnable( GL_POLYGON_SMOOTH );
+	glHint( GL_LINE_SMOOTH_HINT, GL_NICEST );
+	glMatrixMode (GL_PROJECTION);
+	gluOrtho2D (-30, 200.0, -30, 150.0);
+}
+
+void display(void)
+{
+	glClear(GL_COLOR_BUFFER_BIT);
+	glColor3f(1.0, 1.0,1.0);
 
 
 
-int main(){
-	std::vector< Point* > v;
-	v.push_back(new Point(1, 2));
-	v.push_back(new Point(1,1));
-	v.push_back(new Point(4, 3));
-	v.push_back(new Point(4,2));
-	v.push_back(new Point(6, 3));
-	v.push_back(new Point(-1,8));
-	v.push_back(new Point(0, 0));
+	glLineWidth (3);
+	for(int i = 0; i < mst.size(); i++){
+		Edge *temp = mst.at(i);
+		glBegin(GL_LINES);
+		glVertex2i(temp->beg->point->x * 10,temp->beg->point->y * 10);
+		glVertex2i(temp->end->point->x * 10,temp->end->point->y * 10);
+		glEnd();	
+	}
+	glPointSize(4);
+	glColor3f(1.0, 0, 0);
+	glBegin(GL_POINTS);
+	int test = v.size();
+	for(int i = 0; i < points.size(); i++){
+		Point *temp = points.at(i);
 
-	v.push_back(new Point(7, 4));
-	v.push_back(new Point(2,2));
+		glVertex2i(temp->x * 10,temp->y * 10);
+
+
+	}
+	glEnd();	
+	glFlush();
+}
+
+void removeFromVector(std::vector<Edge *> *v, Edge * e){
+
+
+	for(std::vector<Edge * >::iterator it = v->begin(); it != v->end(); ++it){	
+		if( (*it) == e ){
+			v->erase(it);
+			break;
+		}
+	}
+
+}
+
+
+int main(int argc,char *argv[]){
+	std::srand ( unsigned ( std::time(0) ) );
+	//v.push_back(new Point(1, 2));
+	//v.push_back(new Point(1,1));
+	//v.push_back(new Point(4, 3));
+	//v.push_back(new Point(4,2));
+	//v.push_back(new Point(6, 3));
+	//v.push_back(new Point(-1,8));
+	//v.push_back(new Point(0, 0));
+
+	//v.push_back(new Point(7, 4));
+	//v.push_back(new Point(2,2));
+
+	//v.push_back(new Point(1, 2));
+	//v.push_back(new Point(1,1));
+	//v.push_back(new Point(4, 3));
+	//v.push_back(new Point(4,2));
+	//v.push_back(new Point(6, 3));
+	//v.push_back(new Point(-1,8));
+	//v.push_back(new Point(0, 0));
+	//v.push_back(new Point(7, 4));
+	//v.push_back(new Point(2,2));
+	//v.push_back(new Point(7, 3));
+	//v.push_back(new Point(2,14));
+	//v.push_back(new Point(9, 3));
+	//v.push_back(new Point(4,-1));
+	//v.push_back(new Point(5, 5));
+	//v.push_back(new Point(-2,3));
+	//v.push_back(new Point(-1, -1));
+
+	std::string option;
+	std::cin >>  option;
+
+
+	if(option == "1"){
+
+		for(int i = 0; i < 30; ){
+			bool conflict = false;
+			Point * tmp = new Point( (std::rand()%15), (std::rand()%15));
+			for(int j = 0; j < v.size(); j++){
+				if((v.at(j)->x == tmp->x) &&( v.at(j)->y == tmp->y)){
+					conflict = true;
+					break;
+				}
+			}
+			if(!conflict){
+				v.push_back( tmp);
+				++i;
+			}
+		}
+
+		std::ofstream myfile ("example.txt");
+		if (myfile.is_open())
+		{
+
+			for(int i = 0; i< v.size(); ++i){
+				myfile << v.at(i)->x << "," <<  v.at(i)->y << "\n";
+			}
+
+			myfile.close();
+		}
+		else
+			std::cout << "Unable to open file";
+
+
+	}else if(option == "2")
+	{
+
+		std::ifstream myfile ("example.txt");
+		if(myfile.is_open()){
+
+			while(!myfile.eof()){
+				std::string x,y;
+				std::getline(myfile, x, ',');
+				std::getline(myfile, y, '\n');
+				v.push_back(new Point(atoi(x.c_str()), atoi(y.c_str())));
+			}
+
+		}else 
+			std::cout << "Unable to open file";
+		v.pop_back();
+	}
+
+
+
+	points = v;
 
 	std::sort(v.begin(), v.end(), pointSort);
 
 	int size = v.size();
 	int num  = ((size-1)*size)/2;
+
+	int vertNum = size/2;
 	int counter = 0;
 	std::vector<Vertex * > graf;
 
@@ -117,103 +204,160 @@ int main(){
 		nowy->point = v.at(i);
 		graf.push_back(nowy);
 	}
-
-	for(int i = 0; i < size; ++i){
-		Vertex * current = graf.at(i);
-		for(int j = i+1; j < size; ++j){
-			Edge *kraw = new Edge();
-			kraw->beg = graf.at(i);
-			kraw->end = graf.at(j);
-			kraw->odleglosc = kraw->beg->point->odleglosc(kraw->end->point);
-			kraw->beg->edges.push_back(kraw);
-			kraw->end->edges.push_back(kraw);
-			counter++;
-		}	
-	}
-
-	std::vector<Edge *>  primList;
-	std::vector<Edge *>  mst;
-	std::set<Vertex *> odwiedzone; 
-	Vertex *aktualny = graf.at(0);
+	while(mst.size() != vertNum && graf.size() != 0){
 
 
-	while(odwiedzone.size() != graf.size()){
-		odwiedzone.insert(aktualny);
 
-		for(int i = 0; i < aktualny->edges.size(); ++i){
-			primList.push_back(aktualny->edges.at(i));
+		for(int i = 0; i < graf.size(); ++i){
+			Vertex * current = graf.at(i);
+			for(int j = i+1; j < graf.size(); ++j){
+				Edge *kraw = new Edge();
+				kraw->beg = graf.at(i);
+				kraw->end = graf.at(j);
+				kraw->odleglosc = kraw->beg->point->odleglosc(kraw->end->point);
+				kraw->beg->edges.push_back(kraw);
+				kraw->end->edges.push_back(kraw);
+			}	
 		}
-		std::sort(primList.begin(), primList.end(), edgeSort);
+
+		std::vector<Edge *>  primList;
+		std::set<Vertex *> odwiedzone; 
 
 
-		bool pocz = true;
-		bool kon = true;
-		do{
-			pocz = true; kon = true;
-			if(odwiedzone.find(primList.back()->beg) != odwiedzone.end()) pocz = false;
-			if(odwiedzone.find(primList.back()->end) != odwiedzone.end()) kon = false;
-			if(!pocz && !kon)
+		Vertex *aktualny = graf.at(0);
+		while(odwiedzone.size() != graf.size()){
+			odwiedzone.insert(aktualny);
+
+			for(int i = 0; i < aktualny->edges.size(); ++i){
+				primList.push_back(aktualny->edges.at(i));
+			}
+			std::sort(primList.begin(), primList.end(), edgeSort);
+
+
+			bool pocz = true;
+			bool kon = true;
+			do{
+				pocz = true; kon = true;
+				if(odwiedzone.find(primList.back()->beg) != odwiedzone.end()) pocz = false;
+				if(odwiedzone.find(primList.back()->end) != odwiedzone.end()) kon = false;
+				if(!pocz && !kon)
+					primList.pop_back();
+			}while(!pocz && !kon && primList.size() > 0);
+			if(primList.size() > 0){
+				//pierwszy juz odwiedzony
+				if(!pocz){
+					aktualny = primList.back()->end;
+				}else
+					aktualny = primList.back()->beg;
+
+				mst.push_back(primList.back());
+				mst.back()->used = true;
 				primList.pop_back();
-		}while(!pocz && !kon && primList.size() > 0);
-		if(primList.size() > 0){
-			//pierwszy juz odwiedzony
-			if(!pocz){
-				aktualny = primList.back()->end;
-			}else
-				aktualny = primList.back()->beg;
-
-			mst.push_back(primList.back());
-			mst.back()->used = true;
-			primList.pop_back();
-		}
-	}
-
-	for(int i = 0; i < graf.size(); ++i){
-		int numRemoved = 0;
-		int size =  graf.at(i)->edges.size();
-		for(int j = 0; j < size - numRemoved; ++j){
-			Edge* tmpP =graf.at(i)->edges.at(j);
-			if(!tmpP->used){
-				graf.at(i)->edges.erase(graf.at(i)->edges.begin() + j); //tu jest wyciek pamiêci
-				numRemoved++;
-				--j;
 			}
 		}
-	}
 
-	std::sort(mst.begin(), mst.end(), edgeSort);
+		for(int i = 0; i < graf.size(); ++i){
+			int numRemoved = 0;
+			int size =  graf.at(i)->edges.size();
+			for(int j = 0; j < size - numRemoved; ++j){
+				Edge* tmpP =graf.at(i)->edges.at(j);
+				if(!tmpP->used){
+					graf.at(i)->edges.erase(graf.at(i)->edges.begin() + j); //tu jest wyciek pamiêci
+					numRemoved++;
+					--j;
+				}
+			}
+		}
 
-	bool stop = false;
+		std::sort(mst.begin(), mst.end(), edgeSort);
 
-	while(!stop){
+		//Oczyszczenie punktów do kolejnej iteracji.
+		graf.clear();
+
+
+
+		//odcinki
 		for(int i = mst.size() - 1; i>= 0; --i){
+			Edge * shortes = mst.at(i);
+			Vertex * shortestBeg = shortes->beg;
+			Vertex * shortestEnd = shortes->end;
 
+			if(shortestBeg->edges.size() >1 || shortestEnd->edges.size() > 1){
 
+				for(std::vector<Edge * >::iterator it = shortestBeg->edges.begin(); it != shortestBeg->edges.end(); ++it){	
+
+					Edge  *temp = *it;
+					if(temp != shortes){
+						Vertex * vertexToClean;
+						if(temp->beg == shortestBeg)
+							vertexToClean = temp->end;
+						else
+							vertexToClean = temp->beg;
+
+						removeFromVector(&(vertexToClean->edges), temp);
+						removeFromVector(&mst, temp);
+
+						if(vertexToClean->edges.size() == 0 && std::find(graf.begin(), graf.end(), vertexToClean) == graf.end()){
+							graf.push_back(vertexToClean);
+						}
+						--i;
+					}
+				}
+				for(std::vector<Edge * >::iterator it = shortestEnd->edges.begin(); it != shortestEnd->edges.end(); ++it){	
+
+					Edge  *temp = *it;
+					if(temp != shortes){
+						Vertex * vertexToClean;
+						if(temp->beg == shortestEnd)
+							vertexToClean = temp->end;
+						else
+							vertexToClean = temp->beg;
+
+						removeFromVector(&(vertexToClean->edges), temp);
+						removeFromVector(&mst, temp);
+						if(vertexToClean->edges.size() == 0 && std::find(graf.begin(), graf.end(), vertexToClean) == graf.end()){
+							graf.push_back(vertexToClean);
+						}
+						--i;
+					}
+				}
+			}
 
 		}
+		counter++;
 	}
+	//Edge * shortes = ((mst.back()));
+	//Vertex * shortestBeg = shortes->beg;
+	//Vertex * shortestEnd = shortes->end;
+	//for(std::vector<Edge * >::iterator it = shortestBeg->edges.begin(); it != shortestBeg->edges.end(); ++it){	
 
+	//	Edge  *temp = *it;
+	//	if(temp != shortes){
+	//		Vertex * vertexToClean;
+	//		if(temp->beg == shortestBeg)
+	//			vertexToClean = temp->end;
+	//		else
+	//			vertexToClean = temp->beg;
+
+	//		removeFromVector(&(vertexToClean->edges), temp);
+	//		removeFromVector(&mst, temp);
+	//	}
+	//}
+
+
+
+
+
+	glutInit(&argc,argv);
+
+	glutInitDisplayMode (GLUT_SINGLE | GLUT_RGB);
+	glutInitWindowSize (1050, 1050);
+	glutInitWindowPosition (100, 100);
+	glutCreateWindow ("AAL");
+	init2D(0.0,0.0,0.0);
+	glutDisplayFunc(display);
+	glutMainLoop();
 	system("Pause");
 	return 0;
 }
 
-bool sprawdzStopienPolaczonychWierzcholkow(Edge *e){
-	bool moznaUsunacPoczatek = false;
-	bool moznaUsunacKoniec = false;
-
-	for(int j = 0; j <e->beg->edges.size(); ++j){
-		if(e->beg->edges.at(j)->beg->edges.size() != 1 && 
-			e->beg->edges.at(j)->end->edges.size() != 1){
-				moznaUsunacPoczatek = true;
-		}
-	}
-
-	for(int j = 0; j < e->end->edges.size(); ++j){
-		if(e->end->edges.at(j)->beg->edges.size() != 1 && 
-			e->end->edges.at(j)->end->edges.size() != 1){
-				moznaUsunacKoniec = true;
-		}
-	}
-
-	return false;
-}
