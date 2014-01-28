@@ -2,8 +2,9 @@
 #ifndef VERTEX_H
 #define VERTEX_H
 #include <vector>
-#include "Edge.h"
-#include "Point.h"
+
+class Edge;
+class Point;
 
 class Vertex { 
 public:
