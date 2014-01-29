@@ -14,6 +14,8 @@
 #include "Edge.h"
 
 
+enum TYPE { L1, L2};
+
 bool edgeSort(const Edge* one, const Edge* two)
 { //od najw do najm
 	return one->odleglosc > two->odleglosc;
@@ -57,25 +59,52 @@ bool isPartOf(Vertex *x,Vertex *y,Vertex *z){
 	}
 
 }
-bool doesEdgesIntersect(Edge * first, Edge * second){
 
-	if (isPartOf(first->beg,first->end,second->beg) == true ) 
+
+
+bool doesEdgesIntersect(Vertex *a,Vertex *b,Vertex *c, Vertex* d){
+
+
+
+	if (isPartOf(a,b,c) == true ) 
 		return true; 
-	else if (isPartOf(first->beg,first->end,second ->end) == true)
+	else if (isPartOf(a, b,d) == true)
 		return true;
-	else if (isPartOf(second->beg,second ->end,first->beg) == true)
+	else if (isPartOf(c,d,a) == true)
 		return true;
-	else if (isPartOf(second->beg,second ->end,first->end) == true)
+	else if (isPartOf(c,d,b) == true)
 		return true;
-	else if ((det(first->beg,first->end,second->beg))*(det(first->beg,first->end,second ->end)) >= 0)
+	else if ((det(a,b,c))*(det(a,b,d)) >= 0)
 		return false;
-	else if ((det(second->beg,second ->end,first->beg))*(det(second->beg,second ->end,first->end)) >= 0) 
+	else if ((det(c,d,a))*(det(c,d,b)) >= 0) 
 		return false;
 	else 
 		return true;
 
 
 }
+bool doesEdgesIntersect(Edge * first, Edge * second){
+
+	return doesEdgesIntersect(first->beg, first->end, second->beg, second->end);
+
+	//if (isPartOf(first->beg,first->end,second->beg) == true ) 
+	//	return true; 
+	//else if (isPartOf(first->beg,first->end,second ->end) == true)
+	//	return true;
+	//else if (isPartOf(second->beg,second ->end,first->beg) == true)
+	//	return true;
+	//else if (isPartOf(second->beg,second ->end,first->end) == true)
+	//	return true;
+	//else if ((det(first->beg,first->end,second->beg))*(det(first->beg,first->end,second ->end)) >= 0)
+	//	return false;
+	//else if ((det(second->beg,second ->end,first->beg))*(det(second->beg,second ->end,first->end)) >= 0) 
+	//	return false;
+	//else 
+	//	return true;
+
+
+}
+
 
 
 std::vector<Vertex * > graf;
@@ -97,7 +126,7 @@ void init2D(float r, float g, float b)
 
 
 
-const int MULTIPLY = 1;
+const int MULTIPLY = 10;
 void display(void)
 {
 	glClear(GL_COLOR_BUFFER_BIT);
@@ -105,19 +134,31 @@ void display(void)
 
 
 
-//	glLineWidth (3);
+	glLineWidth (3);
 	for(int i = 0; i < result.size(); i++){
 		Edge *temp = result.at(i);
 		if(temp->intersect)
 			glColor3f(1.0, 1.0,0.0);
 		else
 			glColor3f(1.0, 1.0,1.0);
-		glBegin(GL_LINES);
+
+		//glBegin(GL_LINES);
+		//glVertex2i(temp->beg->point->x * MULTIPLY,temp->beg->point->y * MULTIPLY);
+		//glVertex2i(temp->end->point->x * MULTIPLY,temp->end->point->y * MULTIPLY);
+		//glEnd();	
+
+
+
+		glBegin(GL_LINE_STRIP);
 		glVertex2i(temp->beg->point->x * MULTIPLY,temp->beg->point->y * MULTIPLY);
+		if(temp->middle != NULL)
+			glVertex2i(temp->middle->point->x * MULTIPLY, temp->middle->point->y * MULTIPLY);
+
 		glVertex2i(temp->end->point->x * MULTIPLY,temp->end->point->y * MULTIPLY);
 		glEnd();	
+
 	}
-//	glPointSize(4);
+	glPointSize(4);
 	glColor3f(1.0, 0, 0);
 	glBegin(GL_POINTS);
 	int test = v.size();
@@ -198,16 +239,18 @@ void clearVertexEdges(Edge* e, std::vector<Edge*> * v, int *i){
 int main(int argc,char *argv[]){
 	std::srand ( unsigned ( std::time(0) ) );
 
-
+	TYPE t = L1;
 	std::string option;
 	std::cin >>  option;
 
 
+
+
 	if(option == "1"){
 
-		for(int i = 0; i < 100; ){
+		for(int i = 0; i < 35; ){
 			bool conflict = false;
-			Point * tmp = new Point( (std::rand()%200 - 1) - 10, (std::rand()%200) - 10);
+			Point * tmp = new Point( (std::rand()%15) - 2, (std::rand()%15) - 2);
 			for(int j = 0; j < v.size(); j++){
 				if((v.at(j)->x == tmp->x) &&( v.at(j)->y == tmp->y)){
 					conflict = true;
@@ -255,216 +298,293 @@ int main(int argc,char *argv[]){
 
 
 	points = v;
+	if(true){
+		std::sort(v.begin(), v.end(), pointSort);
 
-	std::sort(v.begin(), v.end(), pointSort);
+		int size = v.size();
+		int num  = ((size-1)*size)/2;
 
-	int size = v.size();
-	int num  = ((size-1)*size)/2;
-
-	int vertNum = size/2;
-	int counter = 0;
-	std::vector<Vertex * > graf;
-
-	for(int i = 0; i < size; ++i){
-		Vertex* nowy = new Vertex();
-		nowy->point = v.at(i);
-		graf.push_back(nowy);
-	}
-
-	std::cout << "Poczatek " << std::endl;
-	while(result.size() != vertNum && graf.size() != 0){
-std::cout << "Obieg  " << counter << std::endl;
+		int vertNum = size/2;
+		int counter = 0;
 
 
-		for(int i = 0; i < graf.size(); ++i){
-			Vertex * current = graf.at(i);
-			for(int j = i+1; j < graf.size(); ++j){
-				Edge *kraw = new Edge();
-				kraw->beg = graf.at(i);
-				kraw->end = graf.at(j);
-				kraw->odleglosc = kraw->beg->point->odleglosc(kraw->end->point);
-				kraw->beg->edges.push_back(kraw);
-				kraw->end->edges.push_back(kraw);
-			}	
+		std::vector<Vertex * > graf;
+
+		for(int i = 0; i < size; ++i){
+			Vertex* nowy = new Vertex();
+			nowy->point = v.at(i);
+			graf.push_back(nowy);
 		}
 
-		std::vector<Edge *>  primList;
-		std::set<Vertex *> odwiedzone; 
+		std::cout << "Poczatek " << std::endl;
+		while(result.size() != vertNum && graf.size() != 0){
+			std::cout << "Obieg  " << counter << std::endl;
 
 
-		Vertex *aktualny = graf.at(0);
-		while(odwiedzone.size() != graf.size()){
-			odwiedzone.insert(aktualny);
-
-			for(int i = 0; i < aktualny->edges.size(); ++i){
-				primList.push_back(aktualny->edges.at(i));
+			for(int i = 0; i < graf.size(); ++i){
+				Vertex * current = graf.at(i);
+				for(int j = i+1; j < graf.size(); ++j){
+					Edge *kraw = new Edge();
+					kraw->beg = graf.at(i);
+					kraw->end = graf.at(j);
+					kraw->odleglosc = kraw->beg->point->odleglosc(kraw->end->point);
+					kraw->beg->edges.push_back(kraw);
+					kraw->end->edges.push_back(kraw);
+				}	
 			}
-			std::sort(primList.begin(), primList.end(), edgeSort);
+
+			std::vector<Edge *>  primList;
+			std::set<Vertex *> odwiedzone; 
 
 
-			bool pocz = true;
-			bool kon = true;
-			do{
-				pocz = true; kon = true;
-				if(odwiedzone.find(primList.back()->beg) != odwiedzone.end()) pocz = false;
-				if(odwiedzone.find(primList.back()->end) != odwiedzone.end()) kon = false;
-				if(!pocz && !kon)
+			Vertex *aktualny = graf.at(0);
+			while(odwiedzone.size() != graf.size()){
+				odwiedzone.insert(aktualny);
+
+				for(int i = 0; i < aktualny->edges.size(); ++i){
+					primList.push_back(aktualny->edges.at(i));
+				}
+				std::sort(primList.begin(), primList.end(), edgeSort);
+
+
+				bool pocz = true;
+				bool kon = true;
+				do{
+					pocz = true; kon = true;
+					if(odwiedzone.find(primList.back()->beg) != odwiedzone.end()) pocz = false;
+					if(odwiedzone.find(primList.back()->end) != odwiedzone.end()) kon = false;
+					if(!pocz && !kon)
+						primList.pop_back();
+				}while(!pocz && !kon && primList.size() > 0);
+
+				if(primList.size() > 0){
+					//pierwszy juz odwiedzony
+					if(!pocz){
+						aktualny = primList.back()->end;
+					}else
+						aktualny = primList.back()->beg;
+
+
+					mst.push_back(primList.back());
+					mst.back()->used = true;
 					primList.pop_back();
-			}while(!pocz && !kon && primList.size() > 0);
-
-			if(primList.size() > 0){
-				//pierwszy juz odwiedzony
-				if(!pocz){
-					aktualny = primList.back()->end;
-				}else
-					aktualny = primList.back()->beg;
-
-
-				mst.push_back(primList.back());
-				mst.back()->used = true;
-				primList.pop_back();
-			}
-		}
-
-		//dodanie do vektora odcinkow ktore sie przecinaly
-		for(int i = 0; i< fromIntersecting.size();++i){
-			mst.push_back(fromIntersecting.at(i));
-		}
-
-		fromIntersecting.clear();
-
-
-		for(int i = 0; i < graf.size(); ++i){
-			int numRemoved = 0;
-			int size =  graf.at(i)->edges.size();
-			for(int j = 0; j < size - numRemoved; ++j){
-				Edge* tmpP =graf.at(i)->edges.at(j);
-				if(!tmpP->used){
-					graf.at(i)->edges.erase(graf.at(i)->edges.begin() + j); //tu jest wyciek pamiêci
-					numRemoved++;
-					--j;
 				}
 			}
-		}
 
-		std::sort(mst.begin(), mst.end(), edgeSort);
+			//dodanie do vektora odcinkow ktore sie przecinaly
+			for(int i = 0; i< fromIntersecting.size();++i){
+				mst.push_back(fromIntersecting.at(i));
+			}
 
-		//Oczyszczenie punktów do kolejnej iteracji.
-		graf.clear();
+			fromIntersecting.clear();
 
 
-		//odcinki
-		for(int i = mst.size() - 1; i>= 0; --i){
-			Edge * shortes = mst.at(i);
-
-			Vertex * shortestBeg = shortes->beg;
-			Vertex * shortestEnd = shortes->end;
-
-			if(shortestBeg->edges.size() >1 || shortestEnd->edges.size() > 1){
-
-				for(std::vector<Edge * >::iterator it = shortestBeg->edges.begin(); it != shortestBeg->edges.end(); ++it){	
-
-					Edge  *temp = *it;
-					if(temp != shortes){
-						Vertex * vertexToClean;
-						if(temp->beg == shortestBeg)
-							vertexToClean = temp->end;
-						else
-							vertexToClean = temp->beg;
-
-						removeFromVector(&(vertexToClean->edges), temp);
-						removeFromVector(&mst, temp);
-
-						if(vertexToClean->edges.size() == 0 && std::find(graf.begin(), graf.end(), vertexToClean) == graf.end()){
-							graf.push_back(vertexToClean);
-						}
-						--i;
+			for(int i = 0; i < graf.size(); ++i){
+				int numRemoved = 0;
+				int size =  graf.at(i)->edges.size();
+				for(int j = 0; j < size - numRemoved; ++j){
+					Edge* tmpP =graf.at(i)->edges.at(j);
+					if(!tmpP->used){
+						graf.at(i)->edges.erase(graf.at(i)->edges.begin() + j); //tu jest wyciek pamiêci
+						numRemoved++;
+						--j;
 					}
 				}
-				for(std::vector<Edge * >::iterator it = shortestEnd->edges.begin(); it != shortestEnd->edges.end(); ++it){	
-
-					Edge  *temp = *it;
-					if(temp != shortes){
-						Vertex * vertexToClean;
-						if(temp->beg == shortestEnd)
-							vertexToClean = temp->end;
-						else
-							vertexToClean = temp->beg;
-
-						removeFromVector(&(vertexToClean->edges), temp);
-						removeFromVector(&mst, temp);
-						if(vertexToClean->edges.size() == 0 && std::find(graf.begin(), graf.end(), vertexToClean) == graf.end()){
-							graf.push_back(vertexToClean);
-						}
-						--i;
-					}
-				}
-
-
 			}
-		}
-		counter++;
-		for(int i = 0; i< mst.size();++i){
-			bool doesIntersect = false;
-			if(counter > 0){
-				for(int a = 0; a< result.size(); ++a){
-					Edge* temp1 = mst.at(i);
-					Edge* temp2 = result.at(a);
-					if(temp1 != temp2){
-						if(doesEdgesIntersect(temp1, temp2)){
-							temp1->intersect = true;
-							temp2->intersect = true;
-							doesIntersect = true;
 
-							removeFromVector(&temp1->beg->edges, temp1);
-							removeFromVector(&temp1->end->edges, temp1);
-							removeFromVector(&temp2->beg->edges, temp2);
-							removeFromVector(&temp2->end->edges, temp2);
+			std::sort(mst.begin(), mst.end(), edgeSort);
 
-							Edge * first = new Edge();
-							Edge * second = new Edge();
+			//Oczyszczenie punktów do kolejnej iteracji.
+			graf.clear();
 
-							int iter = 0;
-							do{
-								iter = std::rand()%2;
-								switch(iter){
 
-								case 1: 
-									first->beg = temp2->beg;
-									first->end = temp1->beg;
-									second->beg = temp1->end;
-									second->end = temp2->end;
-									break;
-								case 0:
-									first->beg = temp2->beg;
-									first->end = temp1->end;
-									second->beg = temp1->beg;
-									second->end = temp2->end;
-									break;
+			//odcinki
+			for(int i = mst.size() - 1; i>= 0; --i){
+				Edge * shortes = mst.at(i);
 
-								}
+				Vertex * shortestBeg = shortes->beg;
+				Vertex * shortestEnd = shortes->end;
 
-								
-							}while(doesEdgesIntersect(first,second));
+				if(shortestBeg->edges.size() >1 || shortestEnd->edges.size() > 1){
 
-							mst.push_back(first);
-							mst.push_back(second);
+					for(std::vector<Edge * >::iterator it = shortestBeg->edges.begin(); it != shortestBeg->edges.end(); ++it){	
 
-							removeFromVector(&result, temp2);
+						Edge  *temp = *it;
+						if(temp != shortes){
+							Vertex * vertexToClean;
+							if(temp->beg == shortestBeg)
+								vertexToClean = temp->end;
+							else
+								vertexToClean = temp->beg;
 
-							break;
+							removeFromVector(&(vertexToClean->edges), temp);
+							removeFromVector(&mst, temp);
+
+							if(vertexToClean->edges.size() == 0 && std::find(graf.begin(), graf.end(), vertexToClean) == graf.end()){
+								graf.push_back(vertexToClean);
+							}
+							--i;
+						}
+					}
+					for(std::vector<Edge * >::iterator it = shortestEnd->edges.begin(); it != shortestEnd->edges.end(); ++it){	
+
+						Edge  *temp = *it;
+						if(temp != shortes){
+							Vertex * vertexToClean;
+							if(temp->beg == shortestEnd)
+								vertexToClean = temp->end;
+							else
+								vertexToClean = temp->beg;
+
+							removeFromVector(&(vertexToClean->edges), temp);
+							removeFromVector(&mst, temp);
+							if(vertexToClean->edges.size() == 0 && std::find(graf.begin(), graf.end(), vertexToClean) == graf.end()){
+								graf.push_back(vertexToClean);
+							}
+							--i;
 						}
 					}
 
-				}
 
+				}
 			}
-			if(!doesIntersect){
-				result.push_back(mst.at(i));
+			counter++;
+			for(int i = 0; i< mst.size();++i){
+				bool doesIntersect = false;
+				if(counter > 0){
+					for(int a = 0; a< result.size(); ++a){
+						Edge* temp1 = mst.at(i);
+						Edge* temp2 = result.at(a);
+						if(temp1 != temp2){
+							if(doesEdgesIntersect(temp1, temp2)){
+								temp1->intersect = true;
+								temp2->intersect = true;
+								doesIntersect = true;
+
+								removeFromVector(&temp1->beg->edges, temp1);
+								removeFromVector(&temp1->end->edges, temp1);
+								removeFromVector(&temp2->beg->edges, temp2);
+								removeFromVector(&temp2->end->edges, temp2);
+
+								Edge * first = new Edge();
+								Edge * second = new Edge();
+
+								int iter = 0;
+								do{
+									iter = std::rand()%2;
+									switch(iter){
+
+									case 1: 
+										first->beg = temp2->beg;
+										first->end = temp1->beg;
+										second->beg = temp1->end;
+										second->end = temp2->end;
+										break;
+									case 0:
+										first->beg = temp2->beg;
+										first->end = temp1->end;
+										second->beg = temp1->beg;
+										second->end = temp2->end;
+										break;
+
+									}
+
+
+								}while(doesEdgesIntersect(first,second));
+								first->odleglosc = first->beg->point->odleglosc(first->end->point);
+								second->odleglosc = second->beg->point->odleglosc(second->end->point);
+								mst.push_back(first);
+								mst.push_back(second);
+
+								removeFromVector(&result, temp2);
+
+								break;
+							}
+						}
+
+					}
+
+				}
+				if(!doesIntersect){
+					result.push_back(mst.at(i));
+				}
 			}
+			mst.clear();
 		}
-		mst.clear();
 	}
+
+	if(t == L1){
+
+		std::sort(result.begin(), result.end(), edgeSort);
+
+
+		for(int i = result.size()-1; i >=0; --i){
+			Edge *temp = result.at(i);
+			if(temp->odleglosc != 1.0){
+				Point middle(0,0);
+				if(*(temp->beg->point) < *(temp->end->point)){
+					middle.x= temp->end->point->x;
+					middle.y= temp->beg->point->y;
+				}else{
+					middle.x= temp->beg->point->x;
+					middle.y= temp->end->point->y;
+				}
+
+				temp->middle = new Vertex();
+				temp->middle->point = new Point(middle.x, middle.y);
+			}else 
+				temp->middle = NULL;
+
+		}
+		int counter = 0;
+
+		bool intersect = false;
+		for(int i = result.size()-1; i >=0; --i){
+			intersect = false;
+			Edge * temp1 = result.at(i);
+			Edge * temp2 = NULL;
+			if(!intersect){
+				for(int j = result.size()-1; j >=0; --j){
+					std::cout << counter++ << std::endl;
+					temp2 = result.at(j);
+					if(temp1 != temp2){
+						if(temp1->odleglosc != 1.0 && temp2->odleglosc  != 1.0){
+							if(!intersect)
+								intersect = doesEdgesIntersect(temp1->beg, temp1->middle, temp2->beg, temp2->middle);
+
+							if(!intersect)
+								intersect =doesEdgesIntersect(temp1->beg, temp1->middle, temp2->middle, temp2->end);
+
+							if(!intersect)
+								intersect =doesEdgesIntersect(temp1->middle, temp1->end, temp2->beg, temp2->middle);
+
+							if(!intersect)
+								intersect =doesEdgesIntersect(temp1->middle, temp1->end, temp2->middle, temp2->end);
+
+							if (intersect){
+
+								removeFromVector(&result, temp1);
+
+								removeFromVector(&result, temp2);
+								--i;
+								--j;
+								break;
+							}
+						}
+					}
+					int i = 5;
+				}
+
+			}
+
+		}
+
+
+
+	}
+
+
+
 
 	glutInit(&argc,argv);
 

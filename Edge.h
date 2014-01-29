@@ -12,6 +12,7 @@ public:
 	}
 	Vertex *beg;
 	Vertex *end;
+	Vertex *middle;
 	double odleglosc;
 	bool used;
 	bool intersect;
